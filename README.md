@@ -118,9 +118,18 @@ npm run ios
 # Run on Android emulator
 npm run android
 
-# Run in web browser
+# Run in web browser (opens at http://localhost:8081)
 npm run web
 ```
+
+**Web Development:**
+
+The web version runs in your browser at `http://localhost:8081`. It uses the same codebase as mobile with React Native Web.
+
+**Note:** Some mobile-specific features (haptics, secure store) have web fallbacks:
+- **SecureStore** → localStorage (for development only)
+- **Haptics** → No-op on web
+- **AsyncStorage** → localStorage on web
 
 ## Building APK for Android
 
