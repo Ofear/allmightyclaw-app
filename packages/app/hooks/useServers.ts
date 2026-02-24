@@ -7,43 +7,45 @@ const SERVERS_KEY = 'allmightyclaw_servers';
 export function useServers() {
   const [servers, setServers] = useState<Server[]>([]);
   const [currentServer, setCurrentServer] = useState<Server | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = get(SERVERS_KEY);
-    if (stored) {
+    const loadServers = async () => {
       try {
-        const parsed = JSON.parse(stored) as Server[];
-        setServers(parsed);
-        if (parsed.length > 0) {
-          setCurrentServer(parsed[0]);
+        const stored = await get(SERVERS_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as Server[];
+          setServers(parsed);
+          if (parsed.length > 0) {
+            setCurrentServer(parsed[0]);
+          }
         }
       } catch {
         setServers([]);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+    loadServers();
   }, []);
 
-  const addServer = useCallback((server: Server) => {
-    setServers(prev => {
-      const updated = [...prev, server];
-      save(SERVERS_KEY, JSON.stringify(updated));
-      return updated;
-    });
+  const addServer = useCallback(async (server: Server) => {
+    const updated = [...servers, server];
+    setServers(updated);
+    await save(SERVERS_KEY, JSON.stringify(updated));
     if (!currentServer) {
       setCurrentServer(server);
     }
-  }, [currentServer]);
+  }, [servers, currentServer]);
 
-  const removeServer = useCallback((id: string) => {
-    setServers(prev => {
-      const updated = prev.filter(s => s.id !== id);
-      save(SERVERS_KEY, JSON.stringify(updated));
-      return updated;
-    });
+  const removeServer = useCallback(async (id: string) => {
+    const updated = servers.filter(s => s.id !== id);
+    setServers(updated);
+    await save(SERVERS_KEY, JSON.stringify(updated));
     if (currentServer?.id === id) {
-      setServers(prev => prev[0] || null);
+      setCurrentServer(updated[0] || null);
     }
-  }, [currentServer]);
+  }, [servers, currentServer]);
 
   const switchServer = useCallback((id: string) => {
     const server = servers.find(s => s.id === id);
@@ -52,17 +54,16 @@ export function useServers() {
     }
   }, [servers]);
 
-  const updateServer = useCallback((id: string, updates: Partial<Server>) => {
-    setServers(prev => {
-      const updated = prev.map(s => s.id === id ? { ...s, ...updates } : s);
-      save(SERVERS_KEY, JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
+  const updateServer = useCallback(async (id: string, updates: Partial<Server>) => {
+    const updated = servers.map(s => s.id === id ? { ...s, ...updates } : s);
+    setServers(updated);
+    await save(SERVERS_KEY, JSON.stringify(updated));
+  }, [servers]);
 
   return {
     servers,
     currentServer,
+    loading,
     addServer,
     removeServer,
     switchServer,

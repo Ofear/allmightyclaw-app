@@ -1,16 +1,24 @@
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
-import { useStatus, useCost, useHealth } from '../hooks/useApi';
+import { useStatus, useCost, useHealth } from '../../hooks/useApi';
+import { useTheme } from '../../context/ThemeContext';
+import { LoadingSkeleton, ErrorDisplay } from '../../components';
+import { useHaptics } from '../../hooks/useHaptics';
 
 export default function DashboardScreen() {
   const { data: status, loading: statusLoading, error: statusError, refetch: refetchStatus } = useStatus();
   const { data: cost, loading: costLoading, error: costError, refetch: refetchCost } = useCost();
   const { data: health, loading: healthLoading, error: healthError, refetch: refetchHealth } = useHealth();
+  const { theme } = useTheme();
+  const haptics = useHaptics();
 
   const refetch = () => {
+    haptics.light();
     refetchStatus();
     refetchCost();
     refetchHealth();
   };
+
+  const isLoading = statusLoading || costLoading || healthLoading;
 
   const formatUptime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -20,88 +28,104 @@ export default function DashboardScreen() {
 
   const getHealthColor = (h: string) => {
     switch (h) {
-      case 'healthy': return '#10B981';
-      case 'degraded': return '#F59E0B';
-      case 'unhealthy': return '#EF4444';
-      default: return '#6B7280';
+      case 'healthy': return theme.colors.success;
+      case 'degraded': return theme.colors.warning;
+      case 'unhealthy': return theme.colors.error;
+      default: return theme.colors.textSecondary;
     }
   };
+
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background, padding: 16 },
+    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 16, color: theme.colors.text },
+    section: { marginBottom: 24, padding: 16, backgroundColor: theme.colors.surface, borderRadius: 8 },
+    sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12, color: theme.colors.text },
+    row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+    rowLabel: { color: theme.colors.text },
+    rowValue: { color: theme.colors.textSecondary },
+  });
 
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={statusLoading || costLoading || healthLoading} onRefresh={refetch} />}
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={theme.colors.primary} />}
+      accessibilityLabel="Dashboard screen"
     >
-      <Text style={styles.title}>Dashboard</Text>
+      <Text style={styles.title} accessibilityRole="header">Dashboard</Text>
 
-      <View style={styles.section}>
+      <View style={styles.section} accessibilityLabel="System Status section">
         <Text style={styles.sectionTitle}>System Status</Text>
         {statusError ? (
-          <Text style={styles.error}>Failed to load status</Text>
+          <ErrorDisplay message="Failed to load status" onRetry={refetchStatus} />
         ) : status ? (
           <View>
-            <Text>Provider: {status.provider}</Text>
-            <Text>Model: {status.model}</Text>
-            <Text>Uptime: {formatUptime(status.uptime)}</Text>
-            <Text>Health: <Text style={{ color: getHealthColor(status.health) }}>{status.health}</Text></Text>
-            <Text>Channels: {status.channels.join(', ')}</Text>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Provider</Text>
+              <Text style={styles.rowValue}>{status.provider}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Model</Text>
+              <Text style={styles.rowValue}>{status.model}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Uptime</Text>
+              <Text style={styles.rowValue}>{formatUptime(status.uptime)}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Health</Text>
+              <Text style={{ color: getHealthColor(status.health) }}>{status.health}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Channels</Text>
+              <Text style={styles.rowValue}>{status.channels.join(', ')}</Text>
+            </View>
           </View>
         ) : (
-          <Text>Loading...</Text>
+          <LoadingSkeleton type="text" count={1} />
         )}
       </View>
 
-      <View style={styles.section}>
+      <View style={styles.section} accessibilityLabel="Cost Summary section">
         <Text style={styles.sectionTitle}>Cost Summary</Text>
         {costError ? (
-          <Text style={styles.error}>Failed to load cost</Text>
+          <ErrorDisplay message="Failed to load cost" onRetry={refetchCost} />
         ) : cost ? (
           <View>
-            <View style={styles.costRow}>
-              <Text>Session</Text>
-              <Text>${cost.session.usd.toFixed(4)} ({cost.session.tokens} tokens)</Text>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Session</Text>
+              <Text style={styles.rowValue}>${cost.session.usd.toFixed(4)} ({cost.session.tokens} tokens)</Text>
             </View>
-            <View style={styles.costRow}>
-              <Text>Daily</Text>
-              <Text>${cost.daily.usd.toFixed(4)} ({cost.daily.tokens} tokens)</Text>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Daily</Text>
+              <Text style={styles.rowValue}>${cost.daily.usd.toFixed(4)} ({cost.daily.tokens} tokens)</Text>
             </View>
-            <View style={styles.costRow}>
-              <Text>Monthly</Text>
-              <Text>${cost.monthly.usd.toFixed(4)} ({cost.monthly.tokens} tokens)</Text>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>Monthly</Text>
+              <Text style={styles.rowValue}>${cost.monthly.usd.toFixed(4)} ({cost.monthly.tokens} tokens)</Text>
             </View>
           </View>
         ) : (
-          <Text>Loading...</Text>
+          <LoadingSkeleton type="text" count={1} />
         )}
       </View>
 
-      <View style={styles.section}>
+      <View style={styles.section} accessibilityLabel="Health section">
         <Text style={styles.sectionTitle}>Health</Text>
         {healthError ? (
-          <Text style={styles.error}>Failed to load health</Text>
+          <ErrorDisplay message="Failed to load health" onRetry={refetchHealth} />
         ) : health ? (
           <View>
-            {Object.entries(health).map(([component, status]) => (
-              <View key={component} style={styles.healthRow}>
-                <Text>{component}</Text>
-                <Text style={{ color: getHealthColor(status) }}>{status}</Text>
+            {Object.entries(health).map(([component, healthStatus]) => (
+              <View key={component} style={styles.row}>
+                <Text style={styles.rowLabel}>{component}</Text>
+                <Text style={{ color: getHealthColor(healthStatus) }}>{healthStatus}</Text>
               </View>
             ))}
           </View>
         ) : (
-          <Text>Loading...</Text>
+          <LoadingSkeleton type="text" count={1} />
         )}
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
-  section: { marginBottom: 24, padding: 16, backgroundColor: '#F3F4F6', borderRadius: 8 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12 },
-  error: { color: '#EF4444' },
-  costRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  healthRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-});

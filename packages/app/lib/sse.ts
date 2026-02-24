@@ -24,14 +24,10 @@ export class SSEClient {
   }
 
   private async doConnect(serverUrl: string, token: string): Promise<void> {
-    const url = `${buildUrl('/api/events', serverUrl)}`;
+    const url = `${buildUrl('/api/events', serverUrl)}?token=${encodeURIComponent(token)}`;
     
     try {
-      this.eventSource = new EventSource(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      this.eventSource = new EventSource(url);
       
       this.eventSource.onopen = () => {
         this.reconnectAttempts = 0;

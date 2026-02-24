@@ -2,6 +2,9 @@ import { View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, RefreshC
 import { useState } from 'react';
 import { useMemory } from '../../../hooks/useApi';
 import { addMemory } from '../../../lib/api';
+import { useTheme } from '../../../context/ThemeContext';
+import { useHaptics } from '../../../hooks/useHaptics';
+import { LoadingSkeleton, ErrorDisplay } from '../../../components';
 import type { MemoryEntry } from '../../../lib/types';
 
 export default function MemorySettings() {
@@ -11,17 +14,62 @@ export default function MemorySettings() {
   const [newContent, setNewContent] = useState('');
   const [newCategory, setNewCategory] = useState<'core' | 'daily' | 'conversation'>('conversation');
   const { data: entries, loading, error, refetch } = useMemory(query, category);
+  const { theme } = useTheme();
+  const haptics = useHaptics();
 
   const handleAdd = async () => {
     if (!newContent.trim()) return;
+    haptics.medium();
     await addMemory(newContent, newCategory);
     setNewContent('');
     setShowAdd(false);
     refetch();
+    haptics.success();
   };
 
+  const handleRefresh = () => {
+    haptics.light();
+    refetch();
+  };
+
+  const getCategoryColor = (cat: string) => {
+    switch (cat) {
+      case 'core': return theme.colors.primary;
+      case 'daily': return theme.colors.warning;
+      case 'conversation': return theme.colors.success;
+      default: return theme.colors.textSecondary;
+    }
+  };
+
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.background, padding: 16 },
+    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 16, color: theme.colors.text },
+    searchInput: { backgroundColor: theme.colors.surface, padding: 12, borderRadius: 8, marginBottom: 12, color: theme.colors.text },
+    filters: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+    filterButton: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: theme.colors.surface },
+    activeFilter: { backgroundColor: theme.colors.primary },
+    filterText: { color: theme.colors.textSecondary, fontSize: 14 },
+    activeFilterText: { color: '#fff' },
+    entry: { padding: 16, backgroundColor: theme.colors.surface, borderRadius: 8, marginBottom: 12 },
+    entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    categoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
+    categoryText: { color: '#fff', fontSize: 12 },
+    entryTime: { color: theme.colors.textSecondary, fontSize: 12 },
+    entryContent: { color: theme.colors.text, fontSize: 14 },
+    addForm: { marginBottom: 16 },
+    input: { backgroundColor: theme.colors.surface, padding: 12, borderRadius: 8, marginBottom: 8, minHeight: 80, color: theme.colors.text },
+    categoryButtons: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+    catButton: { padding: 8, borderRadius: 4, backgroundColor: theme.colors.surface },
+    activeCatButton: { backgroundColor: theme.colors.primary },
+    catText: { color: theme.colors.textSecondary },
+    activeCatText: { color: '#fff' },
+    addButton: { backgroundColor: theme.colors.primary, padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 16 },
+    addButtonText: { color: '#fff', fontWeight: '600' },
+    empty: { textAlign: 'center', color: theme.colors.textSecondary, marginTop: 40 },
+  });
+
   const renderEntry = ({ item }: { item: MemoryEntry }) => (
-    <View style={styles.entry}>
+    <View style={styles.entry} accessibilityLabel={`Memory: ${item.content}`}>
       <View style={styles.entryHeader}>
         <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(item.category) }]}>
           <Text style={styles.categoryText}>{item.category}</Text>
@@ -32,24 +80,17 @@ export default function MemorySettings() {
     </View>
   );
 
-  const getCategoryColor = (cat: string) => {
-    switch (cat) {
-      case 'core': return '#2563EB';
-      case 'daily': return '#F59E0B';
-      case 'conversation': return '#10B981';
-      default: return '#6B7280';
-    }
-  };
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Memory</Text>
+    <View style={styles.container} accessibilityLabel="Memory settings">
+      <Text style={styles.title} accessibilityRole="header">Memory</Text>
 
       <TextInput
         style={styles.searchInput}
         placeholder="Search memory..."
+        placeholderTextColor={theme.colors.textSecondary}
         value={query}
         onChangeText={setQuery}
+        accessibilityLabel="Search memory"
       />
 
       <View style={styles.filters}>
@@ -57,7 +98,13 @@ export default function MemorySettings() {
           <TouchableOpacity
             key={cat}
             style={[styles.filterButton, category === cat && styles.activeFilter]}
-            onPress={() => setCategory(category === cat ? undefined : cat)}
+            onPress={() => {
+              haptics.light();
+              setCategory(category === cat ? undefined : cat);
+            }}
+            accessibilityRole="button"
+            accessibilityState={{ selected: category === cat }}
+            accessibilityLabel={`Filter by ${cat}`}
           >
             <Text style={[styles.filterText, category === cat && styles.activeFilterText]}>{cat}</Text>
           </TouchableOpacity>
@@ -69,65 +116,59 @@ export default function MemorySettings() {
           <TextInput
             style={styles.input}
             placeholder="Memory content..."
+            placeholderTextColor={theme.colors.textSecondary}
             value={newContent}
             onChangeText={setNewContent}
             multiline
+            accessibilityLabel="New memory content"
           />
           <View style={styles.categoryButtons}>
             {(['core', 'daily', 'conversation'] as const).map((cat) => (
               <TouchableOpacity
                 key={cat}
                 style={[styles.catButton, newCategory === cat && styles.activeCatButton]}
-                onPress={() => setNewCategory(cat)}
+                onPress={() => {
+                  haptics.light();
+                  setNewCategory(cat);
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: newCategory === cat }}
               >
                 <Text style={newCategory === cat ? styles.activeCatText : styles.catText}>{cat}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+          <TouchableOpacity style={styles.addButton} onPress={handleAdd} accessibilityRole="button" accessibilityLabel="Save memory">
             <Text style={styles.addButtonText}>Save</Text>
           </TouchableOpacity>
         </View>
       ) : (
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowAdd(true)}>
+        <TouchableOpacity 
+          style={styles.addButton} 
+          onPress={() => {
+            haptics.light();
+            setShowAdd(true);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Add memory"
+        >
           <Text style={styles.addButtonText}>+ Add Memory</Text>
         </TouchableOpacity>
       )}
 
-      <FlatList
-        data={entries || []}
-        renderItem={renderEntry}
-        keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={refetch} />}
-        ListEmptyComponent={<Text style={styles.empty}>No memory entries</Text>}
-      />
+      {error && <ErrorDisplay message="Failed to load memory" onRetry={handleRefresh} />}
+
+      {loading && !entries ? (
+        <LoadingSkeleton type="list" count={3} />
+      ) : (
+        <FlatList
+          data={entries || []}
+          renderItem={renderEntry}
+          keyExtractor={(item) => item.id}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={theme.colors.primary} />}
+          ListEmptyComponent={!loading ? <Text style={styles.empty}>No memory entries</Text> : null}
+        />
+      )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
-  searchInput: { backgroundColor: '#F3F4F6', padding: 12, borderRadius: 8, marginBottom: 12 },
-  filters: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  filterButton: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, backgroundColor: '#F3F4F6' },
-  activeFilter: { backgroundColor: '#2563EB' },
-  filterText: { color: '#6B7280', fontSize: 14 },
-  activeFilterText: { color: '#fff' },
-  entry: { padding: 16, backgroundColor: '#F3F4F6', borderRadius: 8, marginBottom: 12 },
-  entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  categoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
-  categoryText: { color: '#fff', fontSize: 12 },
-  entryTime: { color: '#6B7280', fontSize: 12 },
-  entryContent: { color: '#111827', fontSize: 14 },
-  addForm: { marginBottom: 16 },
-  input: { backgroundColor: '#F3F4F6', padding: 12, borderRadius: 8, marginBottom: 8, minHeight: 80 },
-  categoryButtons: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  catButton: { padding: 8, borderRadius: 4, backgroundColor: '#F3F4F6' },
-  activeCatButton: { backgroundColor: '#2563EB' },
-  catText: { color: '#6B7280' },
-  activeCatText: { color: '#fff' },
-  addButton: { backgroundColor: '#2563EB', padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 16 },
-  addButtonText: { color: '#fff', fontWeight: '600' },
-  empty: { textAlign: 'center', color: '#6B7280', marginTop: 40 },
-});
