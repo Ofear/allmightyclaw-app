@@ -2,7 +2,9 @@
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",
-    "lib": ["ESNext"],
+    "lib": [
+      "ESNext"
+    ],
     "jsx": "react-native",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -14,9 +16,17 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["packages/app/*"]
+      "@/*": [
+        "packages/app/*"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base"
 }
