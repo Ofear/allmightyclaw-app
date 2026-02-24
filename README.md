@@ -86,34 +86,87 @@ packages/app/
 
 ## Getting Started
 
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Expo CLI (`npm install -g expo-cli`)
+- EAS CLI for builds (`npm install -g eas-cli`)
+
+### Installation
+
 ```bash
+# Clone the repository
+git clone https://github.com/Ofear/allmightyclaw-app.git
+cd allmightyclaw-app
+
 # Install dependencies
 npm install
 
 # Start development server
 npm run dev
+```
 
-# Run on iOS
+### Development
+
+```bash
+# Start Expo development server
+npm run dev
+
+# Run on iOS simulator
 npm run ios
 
-# Run on Android
+# Run on Android emulator
 npm run android
 
-# Run on web
+# Run in web browser
 npm run web
 ```
 
-## Scripts
+## Building APK for Android
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Expo development server |
-| `npm run ios` | Run on iOS simulator |
-| `npm run android` | Run on Android emulator |
-| `npm run web` | Run in web browser |
-| `npm test` | Run unit tests |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | Run TypeScript type checking |
+### Option 1: EAS Build (Recommended)
+
+EAS Build compiles your app in Expo's cloud and provides a direct APK download link.
+
+```bash
+# Install EAS CLI (if not already installed)
+npm install -g eas-cli
+
+# Login to Expo (free account required)
+eas login
+
+# Navigate to app directory
+cd packages/app
+
+# Build preview APK (direct download)
+eas build --profile preview --platform android
+
+# Or build production APK for Play Store
+eas build --profile production --platform android
+```
+
+After 10-15 minutes, you'll receive a download link for the APK.
+
+### Option 2: Local Build
+
+```bash
+# Generate native Android project
+cd packages/app
+npx expo prebuild
+
+# Build APK locally
+cd android
+./gradlew assembleRelease
+```
+
+The APK will be at `android/app/build/outputs/apk/release/app-release.apk`.
+
+### Build Profiles
+
+| Profile | Distribution | Use Case |
+|---------|-------------|----------|
+| `preview` | Internal | Direct APK download for testing |
+| `production` | Store | Play Store submission |
 
 ## Testing
 
@@ -127,6 +180,25 @@ npm test -- --coverage
 # Run specific test file
 npm test -- api.test.ts
 ```
+
+**Test Coverage:**
+- API client: 18 tests
+- WebSocket: 13 tests
+- Auth flow: 5 tests
+- Storage: 11 tests
+- **Total: 47 tests**
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Expo development server |
+| `npm run ios` | Run on iOS simulator |
+| `npm run android` | Run on Android emulator |
+| `npm run web` | Run in web browser |
+| `npm test` | Run unit tests |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run TypeScript type checking |
 
 ## Configuration
 
@@ -163,6 +235,10 @@ See [evolution-daemon-spec.md](../evolution-daemon-spec.md) for full API documen
 | `/v1/chat/completions` | POST | Chat completion |
 | `/ws/chat` | WebSocket | Real-time chat |
 | `/api/events` | SSE | Event stream |
+
+## Architecture
+
+Based on [Happy Coder](https://github.com/slopus/happy) - an open-source mobile client for Claude Code and Codex with end-to-end encryption.
 
 ## License
 
