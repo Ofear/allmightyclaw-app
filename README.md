@@ -33,7 +33,7 @@ Mobile + web client for AllMightyClaw — an autonomous AI agent runtime.
 ## Tech Stack
 
 - **TypeScript** - Strict mode enabled
-- **Expo SDK 52** - React Native with Expo Router
+- **Expo SDK 54** - React Native with Expo Router 6
 - **React Native Reanimated** - Fluid animations
 - **AsyncStorage** - Persistent data storage
 - **SecureStore** - Encrypted token storage
@@ -87,8 +87,8 @@ packages/app/
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
+- Node.js 20+
+- npm (workspaces monorepo)
 - Expo CLI (`npm install -g expo-cli`)
 - EAS CLI for builds (`npm install -g eas-cli`)
 
@@ -99,12 +99,20 @@ packages/app/
 git clone https://github.com/Ofear/allmightyclaw-app.git
 cd allmightyclaw-app
 
-# Install dependencies
+# Install dependencies (postinstall script patches expo-router for web)
 npm install
 
 # Start development server
 npm run dev
 ```
+
+### Monorepo Structure
+
+This is an npm workspaces monorepo:
+- Root `package.json` orchestrates workspaces
+- `packages/app/` contains the Expo app
+- Dependencies are hoisted to root node_modules
+- React version overrides ensure consistent React 19
 
 ### Development
 
@@ -125,6 +133,8 @@ npm run web
 **Web Development:**
 
 The web version runs in your browser at `http://localhost:8081`. It uses the same codebase as mobile with React Native Web.
+
+**Monorepo Note:** This app uses an npm workspaces monorepo. The Expo Router web build requires a postinstall patch to fix `process.env.EXPO_ROUTER_APP_ROOT` not being inlined correctly. This is handled automatically by `scripts/patch-expo-router.js` during `npm install`.
 
 **Note:** Some mobile-specific features (haptics, secure store) have web fallbacks:
 - **SecureStore** → localStorage (for development only)

@@ -13,7 +13,12 @@
     "lint": "npm run lint -w @allmightyclaw/app",
     "typecheck": "npm run typecheck -w @allmightyclaw/app",
     "test": "npm run test -w @allmightyclaw/app",
-    "build:android": "npm run build:android -w @allmightyclaw/app"
+    "build:android": "npm run build:android -w @allmightyclaw/app",
+    "postinstall": "node scripts/patch-expo-router.js"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

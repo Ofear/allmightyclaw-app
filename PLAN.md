@@ -8,6 +8,42 @@ Create a mobile + web client for **AllMightyClaw** — an autonomous AI agent ru
 **Stack**: TypeScript, Expo (React Native), React
 **Platforms**: iOS, Android, Web
 
+## Monorepo Setup Notes
+
+### Expo Router Web Fix for Monorepos
+
+When using Expo Router in an npm workspaces monorepo, the `process.env.EXPO_ROUTER_APP_ROOT` environment variable is not properly inlined by babel-preset-expo because node_modules are hoisted to the root. 
+
+**Solution**: Use a postinstall script to patch the `_ctx.*.js` files in expo-router:
+
+1. Add a `postinstall` script in root `package.json`:
+   ```json
+   "postinstall": "node scripts/patch-expo-router.js"
+   ```
+
+2. Create `scripts/patch-expo-router.js` that replaces `process.env.EXPO_ROUTER_APP_ROOT` with the relative path to the app directory.
+
+3. Add React version overrides in root `package.json` to ensure consistent React versions:
+   ```json
+   "overrides": {
+     "react": "19.1.0",
+     "react-dom": "19.1.0"
+   }
+   ```
+
+4. Use a custom `index.js` entry point instead of `expo-router/entry`:
+   ```jsx
+   import { registerRootComponent } from 'expo';
+   import { ExpoRoot } from 'expo-router';
+
+   export function App() {
+     const ctx = require.context('./app');
+     return <ExpoRoot context={ctx} />;
+   }
+
+   registerRootComponent(App);
+   ```
+
 ## AllMightyClaw Gateway API Reference
 
 ### Authentication (Pairing)
