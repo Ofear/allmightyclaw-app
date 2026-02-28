@@ -43,8 +43,8 @@ export default function PairScreen() {
   };
 
   const handlePair = async () => {
-    if (!pairingCode.trim() || pairingCode.length !== 8) {
-      setError('Please enter a valid 8-character pairing code');
+    if (!pairingCode.trim() || pairingCode.length !== 6) {
+      setError('Please enter a valid 6-character pairing code');
       haptics.warning();
       return;
     }
@@ -121,14 +121,14 @@ export default function PairScreen() {
       ) : (
         <>
           <Text style={styles.label}>Pairing Code</Text>
-          <Text style={styles.hint}>Enter the 8-character code shown in your AllMightyClaw terminal</Text>
+          <Text style={styles.hint}>Enter the 6-character code shown in your AllMightyClaw terminal</Text>
           <TextInput
             style={styles.input}
-            placeholder="XXXXXXXX"
+            placeholder="XXXXXX"
             placeholderTextColor={theme.colors.textSecondary}
             value={pairingCode}
             onChangeText={setPairingCode}
-            maxLength={8}
+            maxLength={6}
             autoCapitalize="characters"
             accessibilityLabel="Pairing code input"
           />
