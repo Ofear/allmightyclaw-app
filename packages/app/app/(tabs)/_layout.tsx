@@ -1,8 +1,28 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { getToken } from '../../lib/api';
 
 export default function TabLayout() {
   const { theme } = useTheme();
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getToken()
+      .then(token => setIsAuthenticated(!!token))
+      .catch(() => setIsAuthenticated(false));
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated === false) {
+      router.replace('/pair');
+    }
+  }, [isAuthenticated, router]);
+
+  if (isAuthenticated === null) {
+    return null;
+  }
 
   return (
     <Tabs
