@@ -11,15 +11,34 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
       }
     },
     "production": {
       "android": {
-        "buildType": "apk"
+        "buildType": "aab"
+      },
+      "ios": {
+        "distribution": "app-store"
+      }
+    },
+    "testflight": {
+      "ios": {
+        "distribution": "internal"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./config/android-service-account.json"
+      },
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "1234567890"
+      }
+    }
   }
 }

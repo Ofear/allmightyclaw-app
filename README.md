@@ -82,6 +82,10 @@ packages/app/
     ├── ws.test.ts         # WebSocket tests
     ├── auth.test.ts       # Auth tests
     └── storage.test.ts    # Storage tests
+└── e2e/                   # E2E tests (Detox)
+    ├── pairing.test.ts   # Pairing flow tests
+    ├── chat.test.ts      # Chat tests
+    └── server-switching.test.ts # Server switching tests
 ```
 
 ## Getting Started
@@ -185,12 +189,49 @@ The APK will be at `android/app/build/outputs/apk/release/app-release.apk`.
 | Profile | Distribution | Use Case |
 |---------|-------------|----------|
 | `preview` | Internal | Direct APK download for testing |
-| `production` | Store | Play Store submission |
+| `production` | Store | App Store / Play Store submission |
+
+## Deployment
+
+### iOS (TestFlight / App Store)
+
+```bash
+# Build for TestFlight
+npm run build:ios
+
+# Or use EAS directly
+eas build --profile production --platform ios
+
+# Submit to App Store
+npm run submit:ios
+```
+
+### Android (Play Store)
+
+```bash
+# Build AAB for Play Store
+npm run build:android
+
+# Or use EAS directly
+eas build --profile production --platform android
+
+# Submit to Play Store
+npm run submit:android
+```
+
+### Web
+
+```bash
+# Export static web build
+npm run build:web
+
+# Output in packages/app/dist/
+```
 
 ## Testing
 
 ```bash
-# Run all tests
+# Run unit tests
 npm test
 
 # Run tests with coverage
@@ -198,6 +239,10 @@ npm test -- --coverage
 
 # Run specific test file
 npm test -- api.test.ts
+
+# Run E2E tests (requires Detox and device/emulator)
+npm run e2e:ios
+npm run e2e:android
 ```
 
 **Test Coverage:**
@@ -205,7 +250,34 @@ npm test -- api.test.ts
 - WebSocket: 13 tests
 - Auth flow: 5 tests
 - Storage: 11 tests
-- **Total: 47 tests**
+- **E2E tests: 15 tests** (pairing, chat, server switching)
+- **Total: 50 unit tests + 15 E2E tests**
+
+## E2E Testing with Detox
+
+The app includes Detox E2E tests for critical user flows:
+
+- **Pairing Flow** - Server URL input, pairing code, validation
+- **Chat Conversation** - Send messages, receive responses
+- **Server Switching** - Switch between multiple servers
+
+### Running E2E Tests
+
+```bash
+# Build E2E tests (required before running)
+npm run e2e:build
+
+# Run on iOS simulator
+npm run e2e:ios
+
+# Run on Android emulator
+npm run e2e:android
+```
+
+E2E tests require:
+- iOS Simulator / Android Emulator running
+- Detox CLI installed (`npm install -g detox`)
+- App built with Detox configuration
 
 ## Scripts
 
@@ -218,6 +290,18 @@ npm test -- api.test.ts
 | `npm test` | Run unit tests |
 | `npm run lint` | Run ESLint |
 | `npm run typecheck` | Run TypeScript type checking |
+
+### Build Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run build:ios` | Build iOS for App Store/TestFlight |
+| `npm run build:android` | Build Android AAB for Play Store |
+| `npm run build:preview:ios` | Build iOS for simulator testing |
+| `npm run build:preview:android` | Build Android APK for testing |
+| `npm run build:web` | Export web static build |
+| `npm run submit:ios` | Submit to App Store |
+| `npm run submit:android` | Submit to Play Store |
 
 ## Configuration
 

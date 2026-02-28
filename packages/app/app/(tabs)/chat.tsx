@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useOfflineQueue } from '../../hooks/useOfflineQueue';
 import { getServerUrl, getToken } from '../../lib/api';
@@ -7,6 +7,23 @@ import { useTheme } from '../../context/ThemeContext';
 import { MarkdownRenderer } from '../../components/MarkdownRenderer';
 import { useHaptics } from '../../hooks/useHaptics';
 import type { WsMessage, ChatMessage } from '../../lib/types';
+
+const ChatBubble = memo(({ msg, theme }: { msg: ChatMessage; theme: any }) => (
+  <View 
+    style={[
+      styles.message, 
+      msg.role === 'user' ? styles.userMessage : styles.assistantMessage,
+      { backgroundColor: msg.role === 'user' ? theme.colors.primary : theme.colors.surface }
+    ]}
+    accessibilityLabel={msg.role === 'user' ? `You: ${msg.content}` : `Assistant: ${msg.content}`}
+  >
+    {msg.role === 'user' ? (
+      <Text style={[styles.userText, { color: '#fff' }]}>{msg.content}</Text>
+    ) : (
+      <MarkdownRenderer content={msg.content} />
+    )}
+  </View>
+));
 
 export default function ChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -44,7 +61,7 @@ export default function ChatScreen() {
     }
   }, [lastMessage, haptics]);
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim()) return;
     
     haptics.light();
@@ -59,7 +76,23 @@ export default function ChatScreen() {
     setMessages(prev => [...prev, userMessage]);
     await queueMessage(input);
     setInput('');
-  };
+  }, [input, haptics, queueMessage]);
+
+  const scrollToEnd = useCallback(() => {
+    scrollRef.current?.scrollToEnd({ animated: true });
+  }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }, [messages.length, scrollToEnd]);
+
+  const renderItem = useCallback(({ item }: { item: ChatMessage }) => (
+    <ChatBubble msg={item} theme={theme} />
+  ), [theme]);
+
+  const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
@@ -95,24 +128,21 @@ export default function ChatScreen() {
         </View>
       </View>
 
-      <ScrollView ref={scrollRef} style={styles.messages}>
-        {messages.map(msg => (
-          <View 
-            key={msg.id} 
-            style={[styles.message, msg.role === 'user' ? styles.userMessage : styles.assistantMessage]}
-            accessibilityLabel={msg.role === 'user' ? `You: ${msg.content}` : `Assistant: ${msg.content}`}
-          >
-            {msg.role === 'user' ? (
-              <Text style={styles.userText}>{msg.content}</Text>
-            ) : (
-              <MarkdownRenderer content={msg.content} />
-            )}
-          </View>
-        ))}
-        {!isConnected && messages.length === 0 && (
-          <Text style={styles.placeholder}>Connecting to server...</Text>
-        )}
-      </ScrollView>
+      <FlatList
+        ref={scrollRef}
+        style={styles.messages}
+        data={messages}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        ListEmptyComponent={
+          !isConnected ? <Text style={styles.placeholder}>Connecting to server...</Text> : null
+        }
+        initialNumToRender={20}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        removeClippedSubviews={true}
+      />
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}

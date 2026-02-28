@@ -1,7 +1,7 @@
 {
   "name": "@allmightyclaw/app",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -9,7 +9,18 @@
     "web": "expo start --web",
     "test": "jest",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "e2e": "detox test",
+    "e2e:build": "detox build",
+    "e2e:android": "detox test -c android",
+    "e2e:ios": "detox test -c ios",
+    "build:ios": "eas build -p ios --profile production",
+    "build:android": "eas build -p android --profile production",
+    "build:preview:ios": "eas build -p ios --profile preview",
+    "build:preview:android": "eas build -p android --profile preview",
+    "build:web": "npx expo export --platform web",
+    "submit:ios": "eas submit -p ios",
+    "submit:android": "eas submit -p android"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -39,14 +50,38 @@
     "@babel/core": "^7.25.2",
     "@types/jest": "^29.5.0",
     "@types/react": "~19.1.0",
+    "detox": "^24.0.0",
     "jest": "^29.7.0",
     "jest-expo": "~54.0.0",
     "typescript": "^5.3.0"
   },
   "jest": {
     "preset": "jest-expo",
+    "testPathIgnorePatterns": ["/node_modules/", "/e2e/"],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
     ]
+  },
+  "detox": {
+    "testRunner": "jest",
+    "runnerConfig": "e2e/jest.config.js",
+    "specs": "e2e",
+    "configurations": {
+      "ios": {
+        "type": "ios.simulator",
+        "device": {
+          "id": "iPhone 16",
+          "type": "iPhone 16"
+        },
+        "app": "host.exp.exponent"
+      },
+      "android": {
+        "type": "android.emulator",
+        "device": {
+          "avdName": "pixel_6"
+        },
+        "app": "com.allmightyclaw.app"
+      }
+    }
   }
 }

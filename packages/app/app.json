@@ -15,14 +15,18 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.allmightyclaw.app"
+      "bundleIdentifier": "com.allmightyclaw.app",
+      "itcTeamId": "YOUR_APPLE_TEAM_ID",
+      "appStoreId": "1234567890"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2563EB"
       },
-      "package": "com.allmightyclaw.app"
+      "package": "com.allmightyclaw.app",
+      "versionCode": 1,
+      "playStoreId": "com.allmightyclaw.app"
     },
     "web": {
       "bundler": "metro",
